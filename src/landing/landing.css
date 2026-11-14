@@ -1,0 +1,163 @@
+/* ------------------------------ landing ------------------------------- */
+.landing { position: relative; width: 100%; align-self: stretch; }
+.landing-wrap { width: 100%; padding-left: 1.125em; padding-right: 1.125em; }
+.landing-sr-only {
+  position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden;
+  clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0;
+}
+
+/* the hero stays put while the dive section below slides over it */
+.landing-hero {
+  position: sticky; top: 0; height: 100vh; height: 100svh; overflow: hidden;
+  background-color: var(--brand-secondary);
+}
+.landing-rope { position: absolute; inset: 0; z-index: 1; width: 100%; height: 100%; display: block; touch-action: pan-y; }
+.landing-hero-inner {
+  position: relative; z-index: 2; height: 100%; display: flex; flex-direction: column; justify-content: space-between;
+  padding-top: max(6.5em, 88px); padding-bottom: max(2.5em, clamp(6rem, 8.5vw, 8rem)); pointer-events: none;
+}
+.landing-headline {
+  margin: 0; font-family: var(--font-primary); font-weight: 700; text-transform: uppercase; color: #0b1020;
+  font-size: clamp(44px, min(9.4vw, 17vh), 190px); line-height: 0.88; letter-spacing: 0.005em; pointer-events: auto;
+}
+.landing-line { display: block; overflow: hidden; padding-bottom: 0.04em; }
+.landing-line.has-floating-letter { overflow: visible; }
+.landing-line-inner { display: block; }
+.landing-letter {
+  position: relative; display: inline-block; cursor: grab; touch-action: none;
+  user-select: none; transform-origin: center;
+}
+.landing-letter.is-dragging, .landing-letter.is-throwing { z-index: 10; will-change: transform; }
+.landing-letter.is-dragging { cursor: grabbing; }
+.landing-letter-space { white-space: pre; }
+.landing.is-static .landing-letter { cursor: default; touch-action: auto; user-select: auto; }
+.landing-phone-break { display: none; }
+.landing-foot { pointer-events: auto; }
+.landing-foot-inner { display: grid; gap: 1.5em; grid-template-columns: repeat(12, minmax(0, 1fr)); align-items: end; }
+.landing-intro {
+  grid-column: 1 / span 5; margin: 0; max-width: 26em;
+  font-family: var(--font-secondary); font-size: clamp(16px, 1.25em, 22px); line-height: 1.4; color: rgba(11, 16, 32, 0.72);
+}
+.landing-actions {
+  grid-column: 8 / span 5; display: flex; align-items: center; justify-content: flex-end; gap: 1.5em; font-size: 1.15em;
+  transform: translateY(3em);
+}
+.landing-scroll-cue {
+  position: absolute; left: 1.125em; bottom: 1.5em; color: #0b1020;
+  font-family: var(--font-secondary); font-size: 0.75em; font-weight: 500;
+  letter-spacing: 0.08em; text-transform: uppercase; animation: landing-scroll-pulse 1.8s ease-in-out infinite;
+}
+@keyframes landing-scroll-pulse {
+  0%, 100% { opacity: 0.55; transform: translateY(0); }
+  50% { opacity: 1; transform: translateY(4px); }
+}
+
+/* the dive: a tall section pulled up over the hero, its content pinned to the viewport */
+.landing-dive { position: relative; z-index: 5; margin-top: -100vh; margin-top: -100svh; height: 287vh; height: 287svh; pointer-events: none; }
+.landing-dive-sticky { position: sticky; top: 0; height: 100vh; height: 100svh; overflow: hidden; color: var(--brand-white); }
+.landing-dive-layer { position: absolute; inset: 0; }
+.landing-dive-band, .landing-dive-fallback, .landing-dive-paper { opacity: 0; }
+.landing-dive-paper { background: var(--brand-secondary); }
+.landing-dive-logo { display: flex; align-items: center; justify-content: center; padding: 0 6vw; }
+.landing-flat-logo {
+  font-family: var(--font-primary-dark); font-size: min(16vw, 24vh); line-height: 1; letter-spacing: 0.02em; color: #fff4ea;
+  text-shadow: 0 0 24px rgba(255, 140, 60, 0.45); opacity: 0;
+}
+.landing-flat-dot { color: var(--brand-primary); }
+.landing-dive-label {
+  position: relative; display: flex; flex-direction: column; gap: 0.25em; padding-top: max(6em, 14svh); opacity: 0;
+}
+.landing-dive-label h2, .landing-dive-label p {
+  margin: 0; font-family: var(--font-secondary); font-size: 14px; font-weight: 500; line-height: 1.3;
+  letter-spacing: 0.04em; text-transform: uppercase;
+}
+.landing-dive-label p { color: rgba(253, 248, 245, 0.65); }
+.landing-facts-anchor { position: absolute; left: 0; right: 0; bottom: 0; }
+.landing-facts-wrap { display: flex; justify-content: flex-end; }
+.landing-facts { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 1.5em; width: 100%; margin: 0; padding-bottom: 3em; opacity: 0; }
+.landing-fact { display: flex; flex-direction: column-reverse; justify-content: flex-end; border-top: 1px solid rgba(253, 248, 245, 0.25); padding-top: 1em; }
+.landing-fact dt { margin-top: 0.4em; font-family: var(--font-secondary); font-size: 14px; line-height: 1.3; color: rgba(253, 248, 245, 0.65); }
+.landing-fact dd {
+  margin: 0; font-family: var(--font-secondary); font-size: clamp(28px, 2.8vw, 44px); font-weight: 500; line-height: 1;
+  letter-spacing: -0.03em; font-variant-numeric: tabular-nums;
+}
+
+.landing-horizon { position: absolute; inset: 0; background: #0c0603; }
+.landing-horizon-glow {
+  position: absolute; left: 0; right: 0; top: calc(var(--horizon) - 34%); height: 34%;
+  background: linear-gradient(90deg, rgba(255, 162, 76, 0.14), rgba(255, 84, 0, 0.2) 50%, rgba(200, 52, 14, 0.3));
+  -webkit-mask-image: linear-gradient(to top, #000, transparent); mask-image: linear-gradient(to top, #000, transparent);
+}
+.landing-horizon-line {
+  position: absolute; left: 0; right: 0; top: var(--horizon); height: 1px;
+  background: linear-gradient(90deg, #ffa24c, #ff5400 55%, #c8340e); box-shadow: 0 0 14px 1px rgba(255, 84, 0, 0.55);
+}
+
+/* reduced motion: the same story laid out flat, no pinning, no camera */
+.landing.is-static .landing-hero { position: relative; }
+.landing-dive-static { position: relative; width: 100%; }
+.landing-dive-static-fade { height: 28vh; height: 28svh; background: linear-gradient(to bottom, var(--brand-secondary), #0c0603); }
+.landing-dive-static-fade.is-out { background: linear-gradient(to bottom, #0c0603, var(--brand-secondary)); }
+.landing-dive-static-night { position: relative; display: flex; flex-direction: column; min-height: 100vh; min-height: 100svh; color: var(--brand-white); }
+.landing-dive-static-night .landing-dive-label, .landing-dive-static-night .landing-facts, .landing-dive-static-night .landing-flat-logo { opacity: 1; }
+.landing-dive-static-night .landing-dive-label { padding-top: 4em; }
+.landing-dive-static-logo { position: relative; flex: 1; display: flex; align-items: center; justify-content: center; padding: 0 6vw; }
+
+/* selected works: a dark room the page scrolls through, one screen at a time (about half a screen of scroll each) */
+.room { position: relative; width: 100%; align-self: stretch; height: calc(100vh + (var(--room-count) - 1) * 50.8vh); background: #000; }
+.room-sticky { position: sticky; top: 0; height: 100vh; height: 100svh; overflow: hidden; }
+.room-canvas { position: absolute; inset: 0; }
+.room-overlay {
+  position: absolute; inset: 0; display: flex; flex-direction: column; justify-content: space-between;
+  padding-top: min(6rem, 14svh); padding-bottom: 1.25rem; pointer-events: none;
+  font-family: var(--font-secondary); font-size: 14px; font-weight: 500; line-height: 1.3; color: #ededea;
+}
+.room-row { display: flex; align-items: center; justify-content: space-between; gap: 1rem; }
+.room-title, .room-name, .room-status { margin: 0; font: inherit; letter-spacing: normal; text-transform: none; }
+.room-aside {
+  display: inline-flex; align-items: center; min-height: 44px; color: inherit; pointer-events: auto;
+  text-decoration: underline; text-decoration-color: var(--brand-primary); text-decoration-thickness: 2px; text-underline-offset: 4px;
+}
+.room-dim { opacity: 0.7; }
+.room-status { white-space: nowrap; font-variant-numeric: tabular-nums; }
+.room-links { position: absolute; left: 0; right: 0; bottom: 4rem; margin: 0; padding: 0; list-style: none; text-align: center; pointer-events: none; }
+.room-links a {
+  position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap;
+  font-family: var(--font-secondary); font-size: 14px; color: #000; background: #ededea; border-radius: 999px;
+}
+.room-links a:focus-visible {
+  position: static; display: inline-block; width: auto; height: auto; clip: auto; padding: 0.6em 1.1em; pointer-events: auto;
+  outline: 2px solid var(--brand-primary); outline-offset: 3px;
+}
+.room-fallback { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; padding: 0 1.125em; }
+.room-fallback-card {
+  width: 100%; max-width: 1100px; aspect-ratio: 16 / 10; padding: 0; border: 0; border-radius: 14px; overflow: hidden;
+  background: #111; cursor: pointer; animation: room-card-in 0.5s ease-out;
+}
+.room-fallback-card img { display: block; width: 100%; height: 100%; object-fit: cover; object-position: top; }
+@keyframes room-card-in { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: none; } }
+
+/* the header sits over the dark scenes for a while */
+.navbar-timing { transition: color 0.3s; }
+body.landing-dark .navbar-timing, body.room-dark .navbar-timing { color: var(--brand-white); }
+
+@media screen and (min-width: 768px) {
+  .landing-hold { display: block; }
+  .landing-dive { height: 330vh; height: 330svh; }
+  .landing-dive-label { flex-direction: row; justify-content: space-between; padding-top: max(7em, 14svh); }
+  .landing-facts { width: min(100%, 692px); }
+  .room-overlay { padding-bottom: 2rem; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .room-fallback-card, .landing-scroll-cue { animation: none; }
+}
+@media screen and (max-width: 767px) {
+  .landing-headline { font-size: clamp(44px, min(17vw, 12.5vh), 120px); }
+  .landing-phone-break { display: inline; }
+  .landing-hero-inner { padding-bottom: max(1.75em, clamp(6rem, 8.5vw, 8rem)); }
+  .landing-foot-inner { grid-template-columns: 1fr; gap: 1.25em; }
+  .landing-intro, .landing-actions { grid-column: 1 / -1; }
+  .landing-actions { justify-content: flex-start; flex-wrap: wrap; gap: 0.5em; transform: translateY(2em); }
+  .landing-facts { gap: 1em; padding-bottom: 2.5em; }
+  .landing-fact dt { font-size: 12px; }
+}

@@ -1,6 +1,6 @@
 import { useEffect, useRef } from "react";
 
-const interactiveSelector = "a, button, input, textarea, select, label, summary, [role='button'], .throwable-text, .playful-cat, .question-block, .project-item, .testimonials-body-bg, .two26-nav-toggle-btn";
+const interactiveSelector = "a, button, input, textarea, select, label, summary, [role='button'], .throwable-text, .playful-cat, .question-block, .project-item, .testimonials-body-bg, .two26-nav-toggle-btn, [data-cursor-hover='true']";
 const textSelector = "input, textarea, [contenteditable='true']";
 const CURSORS = "/assets/cursors/";
 // tip of the arrow / index fingertip, in CSS px from each image's top-left corner
@@ -29,6 +29,8 @@ export default function EnergyCursor() {
       pointerY = event.clientY;
       position();
       cursor.classList.add("is-visible");
+      // canvases that change what is under the pointer without the target changing
+      if (event.target instanceof Element && event.target.closest("[data-cursor-live]")) updateTarget(event);
     };
     const updateTarget = (event) => {
       if (!(event.target instanceof Element)) return;

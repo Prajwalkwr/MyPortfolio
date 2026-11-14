@@ -70,6 +70,7 @@ export const profile = {
   phoneHref: "tel:+97798617639879",
   github: "https://github.com/Prajwalkwr",
   instagram: "https://www.instagram.com/prajwal_kunwor/",
+  linkedin: "https://www.linkedin.com/in/prajwal-kunwor-3928902a1/",
 };
 
 export const serviceData = [

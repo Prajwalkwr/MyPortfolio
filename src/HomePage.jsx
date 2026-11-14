@@ -3,7 +3,6 @@ import { Link } from "react-router-dom";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import {
-  projects,
   serviceData,
   profile,
   faqs,
@@ -11,6 +10,9 @@ import {
   showcaseSlides,
 } from "./data";
 import "./styles.css";
+import Landing from "./landing/Landing";
+import WorkShowcase from "./landing/WorkShowcase";
+import { afterPreloader } from "./landing/landingMath";
 gsap.registerPlugin(ScrollTrigger);
 const A = "/assets/";
 
@@ -30,7 +32,7 @@ const arrowSvg = (
   </svg>
 );
 
-function NavLink({ to, children, onClick }) {
+function NavLink({ to, children, onClick, direct = false }) {
   const pathRef = useRef(null);
   const tlRef = useRef(null);
   useEffect(() => {
@@ -48,11 +50,17 @@ function NavLink({ to, children, onClick }) {
   }, []);
   const play = () => tlRef.current?.timeScale(1).play();
   const reverse = () => tlRef.current?.timeScale(1.4).reverse();
+  const handleClick = (event) => {
+    onClick?.(event);
+    if (!direct) return;
+    event.preventDefault();
+    window.location.assign(to);
+  };
   return (
     <Link
       to={to}
       className="navbar-link-btn"
-      onClick={onClick}
+      onClick={handleClick}
       onMouseEnter={play}
       onMouseLeave={reverse}
       onFocus={play}
@@ -68,7 +76,7 @@ function NavLink({ to, children, onClick }) {
   );
 }
 
-function CtaButton({ onClick, className = "", label = "Let's Talk", as = "a" }) {
+function CtaButton({ onClick, className = "", label = "Let's Talk", as = "a", href = "#contact", target, rel }) {
   const ref = useRef(null);
   const arrowRef = useRef(null);
   const fillRef = useRef(null);
@@ -146,11 +154,17 @@ function CtaButton({ onClick, className = "", label = "Let's Talk", as = "a" }) 
     );
   return (
     <a
-      href="#contact"
+      href={href}
+      target={target}
+      rel={rel}
       {...props}
       onClick={(e) => {
-        e.preventDefault();
-        onClick?.();
+        if (href === "#contact" || !href) {
+          e.preventDefault();
+          onClick?.();
+        } else if (onClick) {
+          onClick(e);
+        }
       }}
     >
       {inner}
@@ -169,8 +183,8 @@ function Header({ onContact }) {
     <header className="header">
       <nav className="navbar-wrap">
         <div className="navbar-links">
-          <NavLink to="/">Home</NavLink>
-          <NavLink to="/work">Work</NavLink>
+          <NavLink to="/#work" direct>Home</NavLink>
+          <NavLink to="/#work" direct>Work</NavLink>
           <NavLink to="/about">About</NavLink>
         </div>
         <div className="navbar-right">
@@ -201,10 +215,10 @@ function Header({ onContact }) {
         </div>
         <nav id="mobile-menu" className={`ham-navbar ${open ? "is-open" : ""}`}>
           <div className="hamburger-links">
-            <NavLink to="/" onClick={() => setOpen(false)}>
+            <NavLink to="/#work" direct onClick={() => setOpen(false)}>
               Home
             </NavLink>
-            <NavLink to="/work" onClick={() => setOpen(false)}>
+            <NavLink to="/#work" direct onClick={() => setOpen(false)}>
               Work
             </NavLink>
             <NavLink to="/about" onClick={() => setOpen(false)}>
@@ -289,14 +303,12 @@ function ContactModal({ close }) {
         <div className="modal-social">
           <a href={profile.github} target="_blank" rel="noreferrer">GitHub</a>
           <a href={profile.instagram} target="_blank" rel="noreferrer">Instagram</a>
+          <a href={profile.linkedin} target="_blank" rel="noreferrer">LinkedIn</a>
         </div>
       </div>
     </div>
   );
 }
-
-const cardMaskPath =
-  "M25.007 729.507C25.007 729.507 136.507 1065.7 290.007 969.007C506.711 832.495 -164.765 175.16 89.5069 44.5066C315.057 -71.3883 462.507 559.507 615.507 515.007C768.507 470.507 615.507 25.0068 615.507 25.0068";
 
 function DeferredImage({ src, ...props }) {
   const imageRef = useRef(null);
@@ -325,67 +337,6 @@ function DeferredImage({ src, ...props }) {
   return <img ref={imageRef} {...props} src={visible ? src : undefined} loading="lazy" decoding="async" />;
 }
 
-function ProjectCard({ p, i }) {
-  const CardLink = p.url ? "a" : Link;
-  const cardLinkProps = p.url
-    ? { href: p.url, target: "_blank", rel: "noopener noreferrer" }
-    : { to: "/work" };
-
-  return (
-    <div className="project-item" role="listitem">
-      <div className="project-card-clip-mask">
-        <CardLink
-          {...cardLinkProps}
-          className={`project-card${p.screenshot ? " project-card-screenshot" : ""}`}
-          aria-label={`${p.name} — ${p.type}${p.url ? " (opens in a new tab)" : ""}`}
-        >
-          <div className="project-card-img-wrapper">
-            <DeferredImage className="project-img-hover" src={A + p.hover} alt="" />
-            <div className="project-img-svg">
-              <svg width="100%" height="100%" viewBox="0 0 728 1020" fill="none" preserveAspectRatio="xMidYMid slice">
-                <path
-                  className="project-hover-path"
-                  d={cardMaskPath}
-                  stroke="currentColor"
-                  strokeWidth="50"
-                  strokeLinecap="round"
-                />
-              </svg>
-            </div>
-            <DeferredImage className="project-img" src={A + p.img} alt={`${p.name} website preview`} />
-          </div>
-          <div className="project-detail">
-            <div className="project-logo">
-              {p.mark ? (
-                <img className="project-logo-img" src={A + p.mark} alt="" loading="lazy" />
-              ) : (
-                <span className="project-logo-text" aria-hidden="true">{p.monogram}</span>
-              )}
-            </div>
-            <div className="project-detail-header">
-              <div className="project-detail-btm">
-                <div className="project-name-text">{p.name}</div>
-              </div>
-              <div className="project-detail-text">{p.type}</div>
-            </div>
-            <div className="projects-arrow">
-              <svg width="100%" viewBox="0 0 20 20" fill="none">
-                <path
-                  d="M1.17273 17.9405L18.6533 2.29983M5.84177 1.17288L18.6533 2.29983L18.3543 15.1573"
-                  stroke="currentColor"
-                  strokeWidth="2.34564"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                />
-              </svg>
-            </div>
-          </div>
-        </CardLink>
-      </div>
-    </div>
-  );
-}
-
 /* runs onChange(true/false) as el enters/leaves the viewport; returns a disconnect function */
 function watchVisibility(el, onChange, rootMargin = "100px 0px") {
   if (!el || !("IntersectionObserver" in window)) {
@@ -396,17 +347,6 @@ function watchVisibility(el, onChange, rootMargin = "100px 0px") {
   observer.observe(el);
   return () => observer.disconnect();
 }
-
-/* runs start() now, or once the intro preloader has lifted if it is still covering the page */
-function afterPreloader(start) {
-  if (!document.body.classList.contains("preloader-active")) {
-    start();
-    return () => {};
-  }
-  window.addEventListener("preloader:reveal", start, { once: true });
-  return () => window.removeEventListener("preloader:reveal", start);
-}
-
 function HeroMarquee() {
   const wrapRef = useRef(null);
   useEffect(() => {
@@ -572,125 +512,6 @@ function ShowcaseVideo({ src, alt }) {
   return <video ref={videoRef} className="showcase-slide-img" preload="none" loop muted playsInline aria-label={alt} />;
 }
 
-function HeroChars({ text }) {
-  return text.split("").map((c, i) => (
-    <ThrowOnDrag className="hero-letter" key={i}>
-      <span className="hero-char">{c === " " ? "\u00a0" : c}</span>
-    </ThrowOnDrag>
-  ));
-}
-
-function DraggableChars({ text }) {
-  return text.split("").map((character, i) =>
-    character === " " ? (
-      <span className="hero-pill-space" key={i}>{"\u00a0"}</span>
-    ) : (
-      <ThrowOnDrag className="hero-pill-letter" key={i}>{character}</ThrowOnDrag>
-    )
-  );
-}
-
-function ThrowOnDrag({ children, className = "" }) {
-  const ref = useRef(null);
-  const dragRef = useRef(null);
-
-  useEffect(() => () => gsap.killTweensOf(ref.current), []);
-
-  const handlePointerDown = (event) => {
-    const element = ref.current;
-    if (!element) return;
-    gsap.killTweensOf(element);
-    event.preventDefault();
-    event.currentTarget.setPointerCapture(event.pointerId);
-    dragRef.current = {
-      pointerId: event.pointerId,
-      pointerX: event.clientX,
-      pointerY: event.clientY,
-      lastX: event.clientX,
-      lastY: event.clientY,
-      lastTime: event.timeStamp,
-      x: Number(gsap.getProperty(element, "x")) || 0,
-      y: Number(gsap.getProperty(element, "y")) || 0,
-      vx: 0,
-      vy: 0,
-      moved: false,
-    };
-  };
-
-  const handlePointerMove = (event) => {
-    const drag = dragRef.current;
-    const element = ref.current;
-    if (!drag || drag.pointerId !== event.pointerId || !element) return;
-    if (!drag.moved && Math.hypot(event.clientX - drag.pointerX, event.clientY - drag.pointerY) < 4) return;
-
-    const elapsed = Math.max((event.timeStamp - drag.lastTime) / 1000, 0.008);
-    const deltaX = event.clientX - drag.lastX;
-    const deltaY = event.clientY - drag.lastY;
-    drag.moved = true;
-    drag.vx = deltaX / elapsed;
-    drag.vy = deltaY / elapsed;
-    drag.lastX = event.clientX;
-    drag.lastY = event.clientY;
-    drag.lastTime = event.timeStamp;
-    drag.x += deltaX;
-    drag.y += deltaY;
-    gsap.set(element, { x: drag.x, y: drag.y });
-  };
-
-  const returnToOrigin = (element) => {
-    const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-    gsap.to(element, {
-      x: 0,
-      y: 0,
-      duration: reducedMotion ? 0.2 : 0.8,
-      ease: reducedMotion ? "power1.out" : "elastic.out(1, 0.45)",
-      overwrite: true,
-    });
-  };
-
-  const handlePointerUp = (event) => {
-    const drag = dragRef.current;
-    const element = ref.current;
-    if (!drag || drag.pointerId !== event.pointerId || !element) return;
-    dragRef.current = null;
-    if (!drag.moved) {
-      returnToOrigin(element);
-      return;
-    }
-
-    const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-    gsap.to(element, {
-      x: drag.x + (reducedMotion ? 0 : gsap.utils.clamp(-220, 220, drag.vx * 0.16)),
-      y: drag.y + (reducedMotion ? 0 : gsap.utils.clamp(-180, 180, drag.vy * 0.16)),
-      duration: reducedMotion ? 0.15 : 0.3,
-      ease: "power2.out",
-      overwrite: true,
-      onComplete: () => returnToOrigin(element),
-    });
-  };
-
-  const handlePointerCancel = (event) => {
-    const drag = dragRef.current;
-    const element = ref.current;
-    if (!drag || drag.pointerId !== event.pointerId || !element) return;
-    dragRef.current = null;
-    returnToOrigin(element);
-  };
-
-  return (
-    <span
-      ref={ref}
-      className={`throwable-text ${className}`}
-      onPointerDown={handlePointerDown}
-      onPointerMove={handlePointerMove}
-      onPointerUp={handlePointerUp}
-      onPointerCancel={handlePointerCancel}
-    >
-      {children}
-    </span>
-  );
-}
-
 function SectionHeader({ kicker, title, className = "" }) {
   return (
     <div className="section-projects-header">
@@ -729,80 +550,9 @@ function HomePage({ openContact }) {
         .catch((error) => console.error("Smooth scrolling could not be initialized.", error));
     }
     const mm = gsap.matchMedia();
-    let galleryTicker, galleryResize, galleryObserver, onPreloaderReveal, stopHeroIdleWatch;
+    let galleryTicker, galleryResize, galleryObserver;
     const ctx = gsap.context(() => {
-      /* hero entrance */
-      const heroTl = gsap.timeline({
-        defaults: { ease: "power2.out" },
-        paused: reduced,
-      });
-      let heroReady = false;
-      /* idle loops record the letters' and labels' current transform as their resting point,
-         so they may only start once the entrance (which waits for the preloader) has landed */
-      const startHeroIdle = () => {
-        if (reduced) return;
-        const after = (delay) => Math.max(0, delay - heroTl.duration());
-        const loops = [];
-        ctx.add(() => {
-          /* headline: a soft wave runs through the letters every few seconds */
-          loops.push(
-            gsap
-              .timeline({ repeat: -1, repeatDelay: 4, delay: after(2.6) })
-              .to(".hero-char", { yPercent: -10, duration: 0.25, stagger: 0.04, ease: "power2.out", yoyo: true, repeat: 1 })
-          );
-          loops.push(gsap.to(".hero-heading-spark", { rotate: 14, transformOrigin: "0% 100%", duration: 0.5, repeat: -1, yoyo: true, repeatDelay: 1.2, ease: "sine.inOut", delay: after(1.6) }));
-          /* labels float gently once they have landed */
-          gsap.utils.toArray(".hero-pill").forEach((pill, i) => {
-            loops.push(gsap.to(pill, { y: -6, duration: 1.8 + i * 0.3, delay: after(1.6 + i * 0.2), repeat: -1, yoyo: true, ease: "sine.inOut" }));
-          });
-        });
-        stopHeroIdleWatch = watchVisibility(document.querySelector(".section-hero"), (visible) =>
-          loops.forEach((loop) => (visible ? loop.resume() : loop.pause()))
-        );
-      };
-      heroTl
-        .fromTo(
-          ".hero-char",
-          { yPercent: 110, rotate: 8, opacity: 0 },
-          { yPercent: 0, rotate: 0, opacity: 1, duration: 0.8, stagger: 0.035, ease: "back.out(1.6)" }
-        )
-        .fromTo(".hero-heading-spark path", { strokeDasharray: 40, strokeDashoffset: 40 }, { strokeDashoffset: 0, duration: 0.35, stagger: 0.1, ease: "power2.out" }, 0.7)
-        .fromTo(".hero-pill", { opacity: 0, scale: 0.4, y: 20 }, { opacity: 1, scale: 1, y: 0, duration: 0.55, stagger: 0.18, ease: "back.out(2.5)" }, 0.45)
-        .fromTo(".hero-pill-text", { yPercent: 105, opacity: 0 }, { yPercent: 0, opacity: 1, duration: 0.5, stagger: 0.18, ease: "back.out(1.6)" }, 0.6)
-        .fromTo(".hero-bg-img", { scale: 1.08 }, { scale: 1, duration: 1.1, ease: "power3.out" }, 0)
-        .fromTo(".hero-scene-floor", { opacity: 0 }, { opacity: 1, duration: 1 }, 0.3)
-        .call(() => {
-          gsap.set(".hero-line-mask", { overflow: "visible" });
-          heroReady = true;
-          startHeroIdle();
-        });
-      if (reduced) {
-        heroTl.progress(1);
-      } else if (document.body.classList.contains("preloader-active")) {
-        heroTl.pause(0);
-        onPreloaderReveal = () => heroTl.play();
-        window.addEventListener("preloader:reveal", onPreloaderReveal, { once: true });
-      }
-      if (!reduced) {
-        /* headline: letters lift and turn orange under the pointer */
-        gsap.utils.toArray(".hero-char").forEach((char) => {
-          const base = getComputedStyle(char).color;
-          char.addEventListener("pointerenter", () => {
-            if (!heroReady) return;
-            gsap.to(char, { y: -char.offsetHeight * 0.14, rotate: gsap.utils.random(-6, 6), color: "#FF5400", duration: 0.25, ease: "power2.out", overwrite: "auto" });
-          });
-          char.addEventListener("pointerleave", () => {
-            if (!heroReady) return;
-            gsap.to(char, { y: 0, rotate: 0, color: base, duration: 0.8, ease: "elastic.out(1, 0.4)", overwrite: "auto" });
-          });
-        });
-        gsap.to(".hero-scene-bg", {
-          yPercent: 8,
-          ease: "none",
-          scrollTrigger: { trigger: ".section-hero", start: "top top", end: "bottom top", scrub: true },
-        });
-      }
-      /* hero marquee: ribbon draw + masked text reveal + loop is handled by <HeroMarquee /> */
+      /* the landing (hero, rope and dive) animates itself in <Landing />; the marquee in <HeroMarquee /> */
 
       /* about: character reveal + pills */
       if (!reduced)
@@ -942,58 +692,6 @@ function HomePage({ openContact }) {
           }
         }
       })();
-
-      /* project cards: clip-mask + 3d tilt reveal (reversible, like the reference) */
-      if (!reduced) {
-        gsap.utils.toArray(".project-card-clip-mask").forEach((mask, i) => {
-          const card = mask.querySelector(".project-card");
-          gsap.set(mask, {
-            clipPath: "inset(42.5% 42.5% 42.5% 42.5%)",
-            webkitClipPath: "inset(42.5% 42.5% 42.5% 42.5%)",
-            borderRadius: "36px",
-            overflow: "hidden",
-            willChange: "clip-path, border-radius",
-          });
-          gsap.set(card, {
-            scale: 1.45,
-            rotateX: 25,
-            rotateY: i % 2 === 0 ? -16 : 16,
-            rotate: i % 2 === 0 ? -4 : 4,
-            transformPerspective: 800,
-            transformOrigin: "center center",
-            willChange: "transform",
-          });
-          const cardTl = gsap.timeline({
-            scrollTrigger: { trigger: mask, start: "top 85%", toggleActions: "play none none reverse", invalidateOnRefresh: true },
-          });
-          cardTl
-            .to(mask, { clipPath: "inset(0% 0% 0% 0%)", webkitClipPath: "inset(0% 0% 0% 0%)", borderRadius: "0px", duration: 1.25, ease: "power3.out" }, 0)
-            .to(card, { scale: 1, rotateX: 0, rotateY: 0, rotate: 0, duration: 1.25, ease: "power3.out" }, 0);
-        });
-
-        /* project card hover: brush stroke draw + image swap + arrow spring */
-        gsap.utils.toArray(".project-card").forEach((card) => {
-          const path = card.querySelector(".project-hover-path");
-          const hoverImg = card.querySelector(".project-img-hover");
-          const mainImg = card.querySelector(".project-img");
-          const arrow = card.querySelector(".projects-arrow");
-          if (!path) return;
-          path.style.strokeLinecap = "round";
-          path.style.strokeLinejoin = "round";
-          const len = path.getTotalLength();
-          gsap.set(path, { strokeDasharray: len, strokeDashoffset: len, strokeWidth: 0 });
-          if (arrow) gsap.set(arrow, { transformOrigin: "center center", rotation: 0, scale: 1 });
-          const tl = gsap.timeline({ paused: true, defaults: { ease: "power1.inOut" } });
-          tl.to(path, { strokeDashoffset: 0, strokeWidth: 340, duration: 0.95 }, 0)
-            .to(hoverImg, { opacity: 1, duration: 0.5 }, 0.3)
-            .to(mainImg, { opacity: 0, duration: 0.5 }, 0.3);
-          if (arrow)
-            tl.to(arrow, { rotation: -45, duration: 0.28, ease: "power2.out" }, 0)
-              .to(arrow, { rotation: 0, duration: 0.65, ease: "elastic.out(1.15, 0.35)" }, 0.28);
-          card.addEventListener("mouseenter", () => tl.timeScale(1).play());
-          card.addEventListener("mouseleave", () => tl.timeScale(1.3).reverse());
-        });
-      }
 
       /* projects end: line-by-line heading, milestone pills, button */
       (() => {
@@ -1216,7 +914,7 @@ function HomePage({ openContact }) {
 
       if (reduced) {
         gsap.set(
-          ".hero-line,.hero-char,.hero-pill,.hero-pill-text,.hero-bg-img,.project-card-clip-mask,.project-card,.project-line,.projects-pill,.footer-heading-line,.about-char,.service-svg,.service-block-para-wrapper,.footer-btm",
+          ".project-line,.projects-pill,.footer-heading-line,.about-char,.service-svg,.service-block-para-wrapper,.footer-btm",
           { clearProps: "all", opacity: 1, scale: 1, y: 0, yPercent: 0, rotate: 0, rotateX: 0, rotateY: 0, strokeDashoffset: 0, clipPath: "none" }
         );
       }
@@ -1230,8 +928,6 @@ function HomePage({ openContact }) {
       cancelled = true;
       ctx.revert();
       mm.revert();
-      if (onPreloaderReveal) window.removeEventListener("preloader:reveal", onPreloaderReveal);
-      stopHeroIdleWatch?.();
       galleryObserver?.disconnect();
       if (galleryTicker) gsap.ticker.remove(galleryTicker);
       if (galleryResize) window.removeEventListener("resize", galleryResize);
@@ -1339,69 +1035,16 @@ function HomePage({ openContact }) {
 
   return (
     <main className="page-home">
-      {/* ------------------------------- HERO ------------------------------- */}
-      <section className="section-hero">
-        <div className="section-hero-wrapper">
-          <div className="hero-text">
-            <div className="hero-pill-position two">
-              <div className="hero-pill"><span className="hero-pill-text"><DraggableChars text="BIM student" /></span></div>
-            </div>
-            <h1 className="heading" aria-label="Hi, I'm Prajwal Kunwor">
-              <span className="hero-line-mask">
-                <div className="hero-line" aria-hidden="true">
-                  <HeroChars text="HI," />
-                  {"\u00a0"}
-                  <HeroChars text="I’M" />
-                  <span className="hero-heading-spark" aria-hidden="true">
-                    <svg viewBox="0 0 40 34" fill="none">
-                      <path d="M4 32C10 24 20 14 34 6" stroke="#FF5400" strokeWidth="5" strokeLinecap="round" />
-                      <path d="M15 28C19 21 26 14 34 10" stroke="#FF5400" strokeWidth="5" strokeLinecap="round" />
-                      <path d="M26 25C30 20 34 16 38 14" stroke="#FF5400" strokeWidth="5" strokeLinecap="round" />
-                    </svg>
-                  </span>
-                </div>
-              </span>
-              <span className="hero-line-mask">
-                <div className="hero-line" aria-hidden="true">
-                  <HeroChars text="PRAJWAL" />
-                </div>
-              </span>
-              <span className="hero-line-mask">
-                <div className="hero-line" aria-hidden="true">
-                  <HeroChars text="KUNWOR" />
-                </div>
-              </span>
-            </h1>
-            <div className="hero-pill-position one">
-              <div className="hero-pill"><span className="hero-pill-text"><DraggableChars text="Web developer" /></span></div>
-            </div>
-            <div className="hero-pill-position three">
-              <div className="hero-pill"><span className="hero-pill-text"><DraggableChars text="Kathmandu, Nepal" /></span></div>
-            </div>
-          </div>
-
-          {/* scenic illustration with a slow parallax */}
-          <div className="hero-scene" aria-hidden="true">
-            <div className="hero-scene-bg">
-              <img
-                className="hero-bg-img"
-                src={A + "hero/hero-bg.webp"}
-                srcSet={`${A}hero/hero-bg-480.webp 480w, ${A}hero/hero-bg-768.webp 768w, ${A}hero/hero-bg-1024.webp 1024w, ${A}hero/hero-bg-1440.webp 1440w, ${A}hero/hero-bg.webp 1672w`}
-                sizes="(max-width: 991px) 150vw, 100vw"
-                alt=""
-                fetchPriority="high"
-                decoding="async"
-              />
-            </div>
-            <div className="hero-scene-floor" />
-          </div>
-        </div>
-      </section>
-
-      {/* ------------------------------ MARQUEE ----------------------------- */}
-      <section className="section-hero-marquee">
-        <HeroMarquee />
-      </section>
+      {/* ---------------- LANDING: hero, rope, and the dive into the night ---------------- */}
+      <Landing
+        cta={
+          <>
+            <CtaButton as="a" href={profile.github} target="_blank" rel="noreferrer" label="GitHub" />
+            <CtaButton as="a" href={profile.instagram} target="_blank" rel="noreferrer" label="Instagram" />
+            <CtaButton as="a" href={profile.linkedin} target="_blank" rel="noreferrer" label="LinkedIn" />
+          </>
+        }
+      />
 
       {/* ------------------------------- ABOUT ------------------------------ */}
       <section className="section-about" ref={aboutRef}>
@@ -1434,6 +1077,11 @@ function HomePage({ openContact }) {
         </div>
       </section>
 
+      {/* ------------------------------ MARQUEE ----------------------------- */}
+      <section className="section-hero-marquee">
+        <HeroMarquee />
+      </section>
+
       {/* ----------------------------- SHOWCASE ----------------------------- */}
       <section className="section-slider-showcase">
         <div className="section-slider-wrapper">
@@ -1452,15 +1100,10 @@ function HomePage({ openContact }) {
       </section>
 
       {/* ----------------------------- PROJECTS ----------------------------- */}
-      <section className="section-projects" id="work">
+      <WorkShowcase />
+      <section className="section-projects">
         <div className="section-projects-wrapper">
-          <SectionHeader kicker="Featured Projects" title="Selected Works" className="less-max-w" />
           <div className="projects-vertical-wrapper">
-            <div className="projects-list" role="list">
-              {projects.map((p, i) => (
-                <ProjectCard p={p} i={i} key={p.slug} />
-              ))}
-            </div>
           <div className="projects-end">
             <div className="projects-end-inner-wrapper">
               <h2 className="projects-end-para">
@@ -1651,6 +1294,7 @@ function HomePage({ openContact }) {
               <div className="footer-links-block socials">
                 <a className="footer-link" href={profile.github} target="_blank" rel="noreferrer">GitHub ↗</a>
                 <a className="footer-link" href={profile.instagram} target="_blank" rel="noreferrer">Instagram ↗</a>
+                <a className="footer-link" href={profile.linkedin} target="_blank" rel="noreferrer">LinkedIn ↗</a>
               </div>
               <div className="footer-brand-note">BIM student &amp;<br />web developer</div>
               <div className="footer-address">Kathmandu,<br />Nepal</div>

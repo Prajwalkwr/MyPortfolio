@@ -6,8 +6,6 @@ const LOGO = INTRO + "logo.png";
 const PANEL_COLOR = "#0d275c";
 const PANEL_COUNT = 8;
 const SAFETY_TIMEOUT = 14000;
-const PRELOAD_TIMEOUT = 1200;
-
 // the last card is the hero shot that stays in the middle of the ring
 const CARDS = [
   { src: "01.jpg", ar: 1354 / 768 },
@@ -46,13 +44,6 @@ function pickLayout() {
   return { stack: 0.74, zoom: 1, mainBoom: 0.6, surround: 0.34, rx: 0.4, ry: 0.3, stagger: 0.11 };
 }
 
-const preloadImage = (src) =>
-  new Promise((resolve) => {
-    const img = new Image();
-    img.onload = img.onerror = () => resolve();
-    img.src = src;
-  });
-
 export default function Preloader() {
   const [reducedMotion] = useState(() => {
     if (typeof window === "undefined") return false;
@@ -68,7 +59,6 @@ export default function Preloader() {
     if (done) return;
     let finished = false;
     let revealed = false;
-    let cancelled = false;
     let ctx;
 
     const originalPaddingRight = document.body.style.paddingRight;
@@ -102,35 +92,27 @@ export default function Preloader() {
     };
 
     const safety = setTimeout(finish, SAFETY_TIMEOUT);
-    const sources = reducedMotion ? [LOGO] : [LOGO, ...CARDS.map((c) => INTRO + c.src)];
-    const assets = Promise.all(sources.map(preloadImage));
-    const timeout = new Promise((resolve) => setTimeout(resolve, PRELOAD_TIMEOUT));
+    const logo = logoRef.current;
+    const cards = cardRefs.current;
+    const panels = panelRefs.current;
+    const openPanels = (duration, ease, each) => ({
+      yPercent: (i) => (i % 2 === 0 ? -100 : 100),
+      duration,
+      ease,
+      stagger: { each, from: "center" },
+    });
 
-    Promise.race([assets, timeout]).then(() => {
-      if (cancelled || !rootRef.current) return;
-      const logo = logoRef.current;
-      const cards = cardRefs.current;
-      const panels = panelRefs.current;
-      const openPanels = (duration, ease, each) => ({
-        yPercent: (i) => (i % 2 === 0 ? -100 : 100),
-        duration,
-        ease,
-        stagger: { each, from: "center" },
-      });
-
-      if (reducedMotion) {
-        ctx = gsap.context(() => {
-          const tl = gsap.timeline({ onComplete: finish });
-          tl.timeScale(4);
-          gsap.set(logo, { xPercent: -50, yPercent: -50 });
-          tl.fromTo(logo, { autoAlpha: 0, scale: 0.9 }, { autoAlpha: 1, scale: 1, duration: 0.4, ease: "power2.out" })
-            .to(logo, { autoAlpha: 0, duration: 0.35 }, "+=0.25")
-            .call(reveal, null, "-=0.05")
-            .to(panels, openPanels(0.5, "power3.inOut", 0.03), "<");
-        }, rootRef);
-        return;
-      }
-
+    if (reducedMotion) {
+      ctx = gsap.context(() => {
+        const tl = gsap.timeline({ onComplete: finish });
+        tl.timeScale(4);
+        gsap.set(logo, { xPercent: -50, yPercent: -50 });
+        tl.fromTo(logo, { autoAlpha: 0, scale: 0.9 }, { autoAlpha: 1, scale: 1, duration: 0.4, ease: "power2.out" })
+          .to(logo, { autoAlpha: 0, duration: 0.35 }, "+=0.25")
+          .call(reveal, null, "-=0.05")
+          .to(panels, openPanels(0.5, "power3.inOut", 0.03), "<");
+      }, rootRef);
+    } else {
       ctx = gsap.context(() => {
         const cfg = pickLayout();
         const vw = window.innerWidth;
@@ -148,10 +130,10 @@ export default function Preloader() {
           });
 
         gsap.set(cards, { xPercent: -50, yPercent: -50, x: 0, y: 0, rotation: 0, autoAlpha: 0, scale: cfg.stack, force3D: true, willChange: "transform, opacity" });
-        gsap.set(logo, { xPercent: -50, yPercent: -50, autoAlpha: 0, scale: 0.72, filter: "blur(8px)" });
+        gsap.set(logo, { xPercent: -50, yPercent: -50, autoAlpha: 0, scale: 0.72, force3D: true, willChange: "transform, opacity" });
 
         const tl = gsap.timeline({ onComplete: finish });
-        tl.to(logo, { autoAlpha: 1, scale: 1, filter: "blur(0px)", duration: 0.9, ease: "power2.out" }, 0.3)
+        tl.to(logo, { autoAlpha: 1, scale: 1, duration: 0.9, ease: "power2.out" }, 0.3)
           .to(logo, { autoAlpha: 0, duration: 0.3, ease: "power1.inOut" }, 1.5);
 
         tl.set(cards[0], { zIndex: 10 }, 1.8)
@@ -186,10 +168,9 @@ export default function Preloader() {
         tl.call(reveal, null, exitAt + 0.4);
         tl.to(panels, openPanels(0.75, "power4.inOut", 0.05), exitAt + 0.4);
       }, rootRef);
-    });
+    }
 
     return () => {
-      cancelled = true;
       clearTimeout(safety);
       ctx?.revert();
       unlockPage();
@@ -210,7 +191,7 @@ export default function Preloader() {
           />
         ))}
       </div>
-      <img ref={logoRef} className="site-preloader-logo" src={LOGO} alt="" draggable="false" />
+      <img ref={logoRef} className="site-preloader-logo" src={LOGO} alt="" draggable="false" decoding="async" />
       {!reducedMotion && (
         <div className="site-preloader-cards">
           {CARDS.map((card, i) => (
@@ -220,7 +201,7 @@ export default function Preloader() {
               className="site-preloader-card"
               style={{ width: `min(90vw, ${(88 * card.ar).toFixed(1)}vh)`, aspectRatio: `${card.ar}` }}
             >
-              <img src={INTRO + card.src} alt="" draggable="false" />
+              <img src={INTRO + card.src} alt="" draggable="false" decoding="async" />
             </div>
           ))}
         </div>

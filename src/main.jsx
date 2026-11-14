@@ -125,6 +125,7 @@ function Footer() {
               <div className="footer-links-block socials">
                 <a className="footer-link" href={profile.github} target="_blank" rel="noreferrer">GitHub ↗</a>
                 <a className="footer-link" href={profile.instagram} target="_blank" rel="noreferrer">Instagram ↗</a>
+                <a className="footer-link" href={profile.linkedin} target="_blank" rel="noreferrer">LinkedIn ↗</a>
               </div>
             </div>
             <div className="footer-top-right-btm">

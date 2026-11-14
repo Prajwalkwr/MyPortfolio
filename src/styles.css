@@ -345,7 +345,7 @@ main { display: block; }
 .site-preloader-card {
   position: absolute; left: 50%; top: 50%; transform-origin: center center;
   border-radius: 14px; overflow: hidden; opacity: 0; backface-visibility: hidden;
-  box-shadow: 0 30px 80px rgba(0, 0, 0, 0.45); border: 1px solid rgba(212, 175, 110, 0.18);
+  box-shadow: 0 16px 36px rgba(0, 0, 0, 0.45); border: 1px solid rgba(212, 175, 110, 0.18);
 }
 .site-preloader-card img {
   width: 100%; height: 100%; max-width: none; object-fit: cover; display: block;
@@ -357,10 +357,7 @@ main { display: block; }
    shrink-wraps inside the centred .page-home column and squeezes the paragraph */
 .section-about { width: 100%; align-self: stretch; }
 .section-about-wrapper { max-width: none; height: auto; padding: 1.5em 1.25em 6em; }
-/* the ribbon dips lowest at its left end, so the pull-up stays small enough
-   that the paragraph always starts below the bottom of the ribbon's box */
 @media screen and (min-width: 992px) {
-  .section-hero-marquee { margin-bottom: -5vw; }
   .section-about-wrapper { padding-top: 1em; }
 }
 .about-pinned {
@@ -398,7 +395,6 @@ main { display: block; }
 }
 @media screen and (max-width: 479px) {
   .about-para { font-size: 2.4em; }
-  .about-text { display: none; }
   .about-pill .hero-pill-text { font-size: 0.7em; }
   .about-pill.first { left: 10%; top: 66%; }
   .about-pill.second { left: 46%; top: 18%; }
