@@ -96,10 +96,10 @@ export const aboutText =
   "I’m a BIM student from Kathmandu, Nepal. I enjoy web development and building practical digital solutions. I learn new tools by working on real projects.";
 
 export const showcaseSlides = [
-  { src: "showcase-1.mp4", video: true, alt: "Showcase reel" },
+  { src: "showcase-1.mp4", video: true, poster: "showcase-1-poster.webp", alt: "Showcase reel" },
   { src: "6ab263498b14a38a7a109afc_Shot 2.webp", alt: "Showcase image" },
-  { src: "showcase-3.mp4", video: true, alt: "Showcase motion" },
-  { src: "6ab2633da8fa39ec5216880b_Shot 4.jpg", alt: "Showcase image" },
+  { src: "showcase-3.mp4", video: true, poster: "showcase-3-poster.webp", alt: "Showcase motion" },
+  { src: "6ab2633da8fa39ec5216880b_Shot 4.webp", alt: "Showcase image" },
   { src: "6ab2633d3e5b6a35a15d74d7_Shot 5.webp", alt: "Showcase image" },
   { src: "6ab2634dc8995221637e120c_Shot 6.webp", alt: "Showcase image" },
 ];

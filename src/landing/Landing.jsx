@@ -29,7 +29,7 @@ export default function Landing({ cta }) {
 
   /* the headline rises line by line once the preloader lifts, then the intro row fades in */
   useEffect(() => {
-    if (reduced) return;
+    if (reduced || window.matchMedia("(max-width: 767px)").matches) return;
     const lines = headlineRef.current?.querySelectorAll(".landing-line-inner");
     const foot = introRef.current?.querySelector(".landing-foot-inner");
     if (!lines?.length || !foot) return;

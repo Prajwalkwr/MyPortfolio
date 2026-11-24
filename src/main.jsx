@@ -147,9 +147,37 @@ function Shell() {
   const [contactOpen, setContactOpen] = useState(false);
   const location = useLocation();
   useEffect(() => {
-    window.scrollTo(0, 0);
-    setTimeout(() => ScrollTrigger.refresh(), 250);
-  }, [location.pathname]);
+    if (!location.hash) window.scrollTo(0, 0);
+    const refreshId = window.setTimeout(() => ScrollTrigger.refresh(), 250);
+    return () => window.clearTimeout(refreshId);
+  }, [location.pathname, location.hash]);
+  useEffect(() => {
+    if (!location.hash) return;
+    let cancelled = false;
+    let attempts = 0;
+    const scrollToHash = () => {
+      if (cancelled) return;
+      const el = document.getElementById(location.hash.slice(1));
+      if (!el) {
+        if (attempts++ < 20) window.setTimeout(scrollToHash, 50);
+        return;
+      }
+      const go = () => {
+        if (cancelled) return;
+        if (window.__two26Lenis) window.__two26Lenis.scrollTo(el, { offset: 0, immediate: attempts > 5 });
+        else el.scrollIntoView({ behavior: attempts > 5 ? "auto" : "smooth" });
+      };
+      go();
+      // retry once layout/lenis settle
+      window.setTimeout(go, 200);
+      window.setTimeout(go, 500);
+    };
+    const id = window.setTimeout(scrollToHash, 80);
+    return () => {
+      cancelled = true;
+      window.clearTimeout(id);
+    };
+  }, [location.pathname, location.hash]);
   useEffect(() => {
     document.body.classList.toggle("modal-open", contactOpen);
   }, [contactOpen]);

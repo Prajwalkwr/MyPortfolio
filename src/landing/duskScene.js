@@ -368,12 +368,16 @@ export function prebuild({ mobile }) {
 export function createDuskScene({ mobile }) {
   let renderer;
   try {
-    renderer = new WebGLRenderer({ antialias: true, alpha: true, powerPreference: "high-performance" });
+    renderer = new WebGLRenderer({
+      antialias: (window.devicePixelRatio || 1) < 1.5,
+      alpha: true,
+      powerPreference: "high-performance",
+    });
   } catch {
     return null;
   }
   if (!renderer.getContext()) return null;
-  renderer.setPixelRatio(cappedRatio(mobile ? 1.5 : 1.75));
+  renderer.setPixelRatio(cappedRatio(mobile ? 1.25 : 1.5));
   renderer.setClearColor(0x000000, 0);
   renderer.toneMapping = NoToneMapping;
   renderer.localClippingEnabled = true;
@@ -734,6 +738,7 @@ export function createDuskScene({ mobile }) {
       backdropMesh.geometry.dispose();
       scene.environment?.dispose();
       renderer.dispose();
+      renderer.forceContextLoss?.();
     },
   };
 }

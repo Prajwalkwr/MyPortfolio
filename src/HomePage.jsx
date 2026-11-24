@@ -32,7 +32,20 @@ const arrowSvg = (
   </svg>
 );
 
-function NavLink({ to, children, onClick, direct = false }) {
+function scrollToHashTarget(hash) {
+  if (!hash || hash === "#") return;
+  const id = hash.replace(/^#/, "");
+  const el = document.getElementById(id);
+  if (!el) return;
+  const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  if (window.__two26Lenis) {
+    window.__two26Lenis.scrollTo(el, { offset: 0, immediate: reduced });
+  } else {
+    el.scrollIntoView({ behavior: reduced ? "auto" : "smooth" });
+  }
+}
+
+function NavLink({ to, children, onClick }) {
   const pathRef = useRef(null);
   const tlRef = useRef(null);
   useEffect(() => {
@@ -47,14 +60,25 @@ function NavLink({ to, children, onClick, direct = false }) {
       path.style.strokeDashoffset = 0;
       path.style.strokeWidth = "24px";
     }
+    return () => {
+      tlRef.current?.kill();
+      tlRef.current = null;
+    };
   }, []);
   const play = () => tlRef.current?.timeScale(1).play();
   const reverse = () => tlRef.current?.timeScale(1.4).reverse();
   const handleClick = (event) => {
     onClick?.(event);
-    if (!direct) return;
-    event.preventDefault();
-    window.location.assign(to);
+    const [pathname, hash] = String(to).split("#");
+    const targetPath = pathname || "/";
+    const onSamePage = window.location.pathname === targetPath || (targetPath === "/" && window.location.pathname === "/");
+    if (hash && onSamePage) {
+      event.preventDefault();
+      scrollToHashTarget("#" + hash);
+      if (window.location.hash !== "#" + hash) {
+        window.history.replaceState(null, "", targetPath + "#" + hash);
+      }
+    }
   };
   return (
     <Link
@@ -81,6 +105,10 @@ function CtaButton({ onClick, className = "", label = "Let's Talk", as = "a", hr
   const arrowRef = useRef(null);
   const fillRef = useRef(null);
   const loopRef = useRef(null);
+  useEffect(() => () => {
+    loopRef.current?.kill();
+    loopRef.current = null;
+  }, []);
   const enter = () => {
     if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
     gsap.to(fillRef.current, { scale: 10, duration: 0.55, ease: "power2.out", overwrite: "auto" });
@@ -183,8 +211,8 @@ function Header({ onContact }) {
     <header className="header">
       <nav className="navbar-wrap">
         <div className="navbar-links">
-          <NavLink to="/#work" direct>Home</NavLink>
-          <NavLink to="/#work" direct>Work</NavLink>
+          <NavLink to="/#work">Home</NavLink>
+          <NavLink to="/#work">Work</NavLink>
           <NavLink to="/about">About</NavLink>
         </div>
         <div className="navbar-right">
@@ -215,10 +243,10 @@ function Header({ onContact }) {
         </div>
         <nav id="mobile-menu" className={`ham-navbar ${open ? "is-open" : ""}`}>
           <div className="hamburger-links">
-            <NavLink to="/#work" direct onClick={() => setOpen(false)}>
+            <NavLink to="/#work" onClick={() => setOpen(false)}>
               Home
             </NavLink>
-            <NavLink to="/#work" direct onClick={() => setOpen(false)}>
+            <NavLink to="/#work" onClick={() => setOpen(false)}>
               Work
             </NavLink>
             <NavLink to="/about" onClick={() => setOpen(false)}>
@@ -240,13 +268,38 @@ function Header({ onContact }) {
 
 function ContactModal({ close }) {
   const closingRef = useRef(false);
+  const dialogRef = useRef(null);
+  const closeBtnRef = useRef(null);
+  const previouslyFocused = useRef(null);
   const closeAnimated = () => {
     if (closingRef.current) return;
     closingRef.current = true;
     gsap.to(".contact-wipe-path", { strokeWidth: 0, duration: 0.7, ease: "power2.inOut", onComplete: close });
   };
   useEffect(() => {
-    const onKey = (e) => e.key === "Escape" && closeAnimated();
+    previouslyFocused.current = document.activeElement;
+    const onKey = (e) => {
+      if (e.key === "Escape") {
+        closeAnimated();
+        return;
+      }
+      if (e.key !== "Tab") return;
+      const root = dialogRef.current;
+      if (!root) return;
+      const focusable = [...root.querySelectorAll('a[href], button:not([disabled]), [tabindex]:not([tabindex="-1"])')].filter(
+        (el) => !el.hasAttribute("disabled") && el.getAttribute("aria-hidden") !== "true"
+      );
+      if (!focusable.length) return;
+      const first = focusable[0];
+      const last = focusable[focusable.length - 1];
+      if (e.shiftKey && document.activeElement === first) {
+        e.preventDefault();
+        last.focus();
+      } else if (!e.shiftKey && document.activeElement === last) {
+        e.preventDefault();
+        first.focus();
+      }
+    };
     window.addEventListener("keydown", onKey);
     window.__two26Lenis?.stop();
     gsap.set(".contact-wipe-path", { strokeWidth: 0 });
@@ -259,14 +312,17 @@ function ContactModal({ close }) {
         { y: 35, opacity: 0 },
         { y: 0, opacity: 1, stagger: 0.08, duration: 0.7, ease: "power3.out" },
         0.3
-      );
+      )
+      .add(() => closeBtnRef.current?.focus({ preventScroll: true }), 0.55);
     return () => {
       window.removeEventListener("keydown", onKey);
       window.__two26Lenis?.start();
+      const prev = previouslyFocused.current;
+      if (prev && typeof prev.focus === "function") prev.focus({ preventScroll: true });
     };
   }, []);
   return (
-    <div className="contact-modal" role="dialog" aria-modal="true" aria-label="Contact Prajwal" onMouseDown={(e) => e.target === e.currentTarget && closeAnimated()}>
+    <div ref={dialogRef} className="contact-modal" role="dialog" aria-modal="true" aria-label="Contact Prajwal" onMouseDown={(e) => e.target === e.currentTarget && closeAnimated()}>
       <svg className="contact-wipe" viewBox="0 0 998 901" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
         <path
           className="contact-wipe-path"
@@ -280,7 +336,7 @@ function ContactModal({ close }) {
       <div className="modal-layer">
         <div className="modal-top">
           <Link to="/" className="modal-home-link" onClick={closeAnimated}>Home</Link>
-          <button onClick={closeAnimated} className="modal-close">
+          <button ref={closeBtnRef} onClick={closeAnimated} className="modal-close">
             <span aria-hidden="true">×</span>Close
           </button>
         </div>
@@ -523,10 +579,115 @@ function SectionHeader({ kicker, title, className = "" }) {
   );
 }
 
+function FAQ() {
+  const [activeFaq, setActiveFaq] = useState(0);
+  const openWidth = () => (window.innerWidth >= 992 ? "50%" : "75%");
+  useEffect(() => {
+    const syncOpenWidth = () => {
+      const open = document.querySelector(".faq-item.is-open .question-block");
+      if (open) gsap.set(open, { width: openWidth() });
+    };
+    window.addEventListener("resize", syncOpenWidth);
+    return () => window.removeEventListener("resize", syncOpenWidth);
+  }, []);
+  const faqOpen = (item) => {
+    const q = item.querySelector(".question-block");
+    const btm = item.querySelector(".faq-block-btm");
+    const logo = item.querySelector(".faq-logo");
+    const ans = item.querySelector(".faq-answer");
+    item.classList.add("is-open");
+    const tl = gsap.timeline({ defaults: { ease: "power2.out" } });
+    gsap.set(q, { borderWidth: "1px", willChange: "width, border-width" });
+    tl.to(q, { width: openWidth(), duration: 0.45 }, 0);
+    gsap.set(btm, { display: "flex", flexDirection: "row", justifyContent: "flex-end", overflow: "hidden", opacity: 1, transformOrigin: "right bottom" });
+    tl.fromTo(btm, { height: 0, scale: 0 }, { height: "auto", scale: 1, duration: 0.5, ease: "back.out(1.6)", onComplete: () => gsap.set(btm, { overflow: "visible" }) }, 0.05);
+    tl.to(logo, { scale: 1, duration: 0.45, ease: "back.out(2)" }, 0.15);
+    tl.to(ans, { opacity: 1, y: 0, duration: 0.4 }, 0.35);
+  };
+  const faqClose = (item) => {
+    const q = item.querySelector(".question-block");
+    const btm = item.querySelector(".faq-block-btm");
+    const logo = item.querySelector(".faq-logo");
+    const ans = item.querySelector(".faq-answer");
+    item.classList.remove("is-open");
+    const tl = gsap.timeline({ defaults: { ease: "power2.inOut" } });
+    tl.to(ans, { opacity: 0, y: 15, duration: 0.22, ease: "power2.in" }, 0);
+    tl.to(logo, { scale: 0, duration: 0.25, ease: "power2.in" }, 0.12);
+    gsap.set(btm, { overflow: "hidden" });
+    tl.to(btm, { scale: 0, height: 0, opacity: 0, duration: 0.4, onComplete: () => gsap.set(btm, { display: "none" }) }, 0.15);
+    tl.to(q, { width: "100%", borderWidth: "0px", duration: 0.45, ease: "power2.out" }, 0.18);
+  };
+  const toggleFaq = (i, el) => {
+    const item = el.closest(".faq-item");
+    if (!item || item.classList.contains("is-open")) return;
+    const prev = el.closest(".faq-list").querySelector(".faq-item.is-open");
+    if (prev) faqClose(prev);
+    faqOpen(item);
+    setActiveFaq(i);
+  };
+
+  return (
+    <section className="section-faq" id="faq">
+      <div className="section-faq-wrapper">
+        <div className="faq-left">
+          <div className="section-faq-header">
+            <div className="about-text">Frequently Asked Questions</div>
+            <div className="section-heading-wrapper">
+              <h2 className="section-heading left-align">GOOD TO KNOW</h2>
+            </div>
+          </div>
+          <div className="cat-svg" aria-hidden="true">
+            <img src={A + "cat.svg"} alt="" width="559" height="358" />
+          </div>
+        </div>
+        <div className="faq-right">
+          <div className="faq-list-wrapper">
+            <div className="faq-list" role="list">
+              {faqs.map(([q, a], i) => (
+                <div className={`faq-item ${i === 0 ? "is-open" : ""}`} role="listitem" key={q}>
+                  <div className="faq-block">
+                    <button
+                      type="button"
+                      className="question-block"
+                      aria-expanded={activeFaq === i}
+                      aria-controls={`faq-answer-${i}`}
+                      onClick={(e) => toggleFaq(i, e.currentTarget)}
+                      style={{
+                        width: i === 0 ? (typeof window !== "undefined" && window.innerWidth >= 992 ? "50%" : "75%") : "100%",
+                        borderWidth: i === 0 ? "1px" : "0px",
+                      }}
+                    >
+                      <span className="faq-ques">{q}</span>
+                    </button>
+                    <div
+                      id={`faq-answer-${i}`}
+                      className="faq-block-btm"
+                      aria-hidden={activeFaq !== i}
+                      style={i === 0 ? undefined : { display: "none", height: 0 }}
+                    >
+                      <div className="answer-block">
+                        <p className="faq-answer">{a}</p>
+                      </div>
+                      <div className="faq-logo" aria-hidden="true">
+                        <div className="faq-logo-svg">
+                          <img src={A + "faq-26.svg"} alt="" />
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+}
+
 /* ------------------------------- homepage ------------------------------- */
 
 function HomePage({ openContact }) {
-  const [activeFaq, setActiveFaq] = useState(0);
   const aboutRef = useRef(null);
 
   /* ---------------- scroll / entrance animations ---------------- */
@@ -535,7 +696,8 @@ function HomePage({ openContact }) {
     let lenis = null;
     let raf;
     let cancelled = false;
-    if (!reduced) {
+    const finePointer = window.matchMedia("(hover: hover) and (pointer: fine)").matches;
+    if (!reduced && finePointer) {
       import("lenis")
         .then(({ default: Lenis }) => {
           if (cancelled) return;
@@ -550,7 +712,7 @@ function HomePage({ openContact }) {
         .catch((error) => console.error("Smooth scrolling could not be initialized.", error));
     }
     const mm = gsap.matchMedia();
-    let galleryTicker, galleryResize, galleryObserver;
+    let galleryTicker, galleryResize, galleryLoad, galleryObserver;
     const ctx = gsap.context(() => {
       /* the landing (hero, rope and dive) animates itself in <Landing />; the marquee in <HeroMarquee /> */
 
@@ -589,14 +751,9 @@ function HomePage({ openContact }) {
               },
             });
             const total = chars.length || 1;
-            chars.forEach((char, i) => {
-              const start = (i / total) * 85;
-              tl.to(char, { color: "#FF5400", scale: 1.12, duration: 3.5, ease: "power1.out" }, start).to(
-                char,
-                { color: "#000", scale: 1, duration: 3.5, ease: "power1.inOut" },
-                start + 3.5
-              );
-            });
+            const stagger = 85 / total;
+            tl.to(chars, { color: "#FF5400", scale: 1.12, duration: 3.5, ease: "power1.out", stagger }, 0)
+              .to(chars, { color: "#000", scale: 1, duration: 3.5, ease: "power1.inOut", stagger }, 3.5);
             const rotations = [4, -4, -4.5];
             pills.forEach((pill, i) =>
               tl.fromTo(
@@ -647,7 +804,10 @@ function HomePage({ openContact }) {
           ScrollTrigger.refresh();
         };
         window.addEventListener("resize", galleryResize);
-        window.addEventListener("load", measure);
+        if (document.readyState !== "complete") {
+          galleryLoad = measure;
+          window.addEventListener("load", galleryLoad);
+        }
         if (!reduced) {
           ScrollTrigger.create({
             trigger: document.body,
@@ -931,10 +1091,12 @@ function HomePage({ openContact }) {
       galleryObserver?.disconnect();
       if (galleryTicker) gsap.ticker.remove(galleryTicker);
       if (galleryResize) window.removeEventListener("resize", galleryResize);
+      if (galleryLoad) window.removeEventListener("load", galleryLoad);
       if (lenis) {
         gsap.ticker.remove(raf);
         lenis.destroy();
         delete window.__two26Lenis;
+        gsap.ticker.lagSmoothing(500, 33);
       }
     };
   }, []);
@@ -995,44 +1157,6 @@ function HomePage({ openContact }) {
     };
   }, []);
 
-  /* ---------------- faq accordion (one always open, GSAP scrub) ---------------- */
-  const openWidth = () => (window.innerWidth >= 992 ? "50%" : "75%");
-  const faqOpen = (item) => {
-    const q = item.querySelector(".question-block");
-    const btm = item.querySelector(".faq-block-btm");
-    const logo = item.querySelector(".faq-logo");
-    const ans = item.querySelector(".faq-answer");
-    item.classList.add("is-open");
-    const tl = gsap.timeline({ defaults: { ease: "power2.out" } });
-    gsap.set(q, { borderWidth: "1px", willChange: "width, border-width" });
-    tl.to(q, { width: openWidth(), duration: 0.45 }, 0);
-    gsap.set(btm, { display: "flex", flexDirection: "row", justifyContent: "flex-end", overflow: "hidden", opacity: 1, transformOrigin: "right bottom" });
-    tl.fromTo(btm, { height: 0, scale: 0 }, { height: "auto", scale: 1, duration: 0.5, ease: "back.out(1.6)", onComplete: () => gsap.set(btm, { overflow: "visible" }) }, 0.05);
-    tl.to(logo, { scale: 1, duration: 0.45, ease: "back.out(2)" }, 0.15);
-    tl.to(ans, { opacity: 1, y: 0, duration: 0.4 }, 0.35);
-  };
-  const faqClose = (item) => {
-    const q = item.querySelector(".question-block");
-    const btm = item.querySelector(".faq-block-btm");
-    const logo = item.querySelector(".faq-logo");
-    const ans = item.querySelector(".faq-answer");
-    item.classList.remove("is-open");
-    const tl = gsap.timeline({ defaults: { ease: "power2.inOut" } });
-    tl.to(ans, { opacity: 0, y: 15, duration: 0.22, ease: "power2.in" }, 0);
-    tl.to(logo, { scale: 0, duration: 0.25, ease: "power2.in" }, 0.12);
-    gsap.set(btm, { overflow: "hidden" });
-    tl.to(btm, { scale: 0, height: 0, opacity: 0, duration: 0.4, onComplete: () => gsap.set(btm, { display: "none" }) }, 0.15);
-    tl.to(q, { width: "100%", borderWidth: "0px", duration: 0.45, ease: "power2.out" }, 0.18);
-  };
-  const toggleFaq = (i, el) => {
-    const item = el.closest(".faq-item");
-    if (!item || item.classList.contains("is-open")) return;
-    const prev = el.closest(".faq-list").querySelector(".faq-item.is-open");
-    if (prev) faqClose(prev);
-    faqOpen(item);
-    setActiveFaq(i);
-  };
-
   return (
     <main className="page-home">
       {/* ---------------- LANDING: hero, rope, and the dive into the night ---------------- */}
@@ -1051,7 +1175,8 @@ function HomePage({ openContact }) {
         <div className="section-about-wrapper">
           <div className="about-pinned">
             <div className="about-text">A BIT ABOUT ME</div>
-            <p className="about-para" aria-label={aboutText}>
+            <p className="about-para">
+              <span className="landing-sr-only">{aboutText}</span>
               {aboutText.split(" ").map((word, wi) => (
                 <React.Fragment key={wi}>
                   <span className="about-word" aria-hidden="true">
@@ -1088,10 +1213,14 @@ function HomePage({ openContact }) {
           <div className="showcase-slider">
             {[...showcaseSlides, ...showcaseSlides, ...showcaseSlides].map((s, i) => (
               <div className={`showcase-slide ${i >= 6 ? "is-marquee-clone" : ""}`} key={i}>
-                {s.video ? (
+                {s.video && i < showcaseSlides.length ? (
                   <ShowcaseVideo src={s.src} alt={s.alt} />
                 ) : (
-                  <DeferredImage className="showcase-slide-img" src={A + s.src} alt={s.alt} />
+                  <DeferredImage
+                    className="showcase-slide-img"
+                    src={A + (s.video ? s.poster || s.src : s.src)}
+                    alt={s.alt}
+                  />
                 )}
               </div>
             ))}
@@ -1194,59 +1323,7 @@ function HomePage({ openContact }) {
         </div>
       </section>
 
-      {/* -------------------------------- FAQ ------------------------------- */}
-      <section className="section-faq" id="faq">
-        <div className="section-faq-wrapper">
-          <div className="faq-left">
-            <div className="section-faq-header">
-              <div className="about-text">Frequently Asked Questions</div>
-              <div className="section-heading-wrapper">
-                <h2 className="section-heading left-align">GOOD TO KNOW</h2>
-              </div>
-            </div>
-            <div className="cat-svg" aria-hidden="true">
-              <img src={A + "cat.svg"} alt="" width="559" height="358" />
-            </div>
-          </div>
-          <div className="faq-right">
-            <div className="faq-list-wrapper">
-              <div className="faq-list" role="list">
-                {faqs.map(([q, a], i) => (
-                  <div className={`faq-item ${i === 0 ? "is-open" : ""}`} role="listitem" key={q}>
-                    <div className="faq-block">
-                      <button
-                        type="button"
-                        className="question-block"
-                        aria-expanded={activeFaq === i}
-                        aria-controls={`faq-answer-${i}`}
-                        onClick={(e) => toggleFaq(i, e.currentTarget)}
-                        style={{ width: i === 0 ? "50%" : "100%", borderWidth: i === 0 ? "1px" : "0px" }}
-                      >
-                        <span className="faq-ques">{q}</span>
-                      </button>
-                      <div
-                        id={`faq-answer-${i}`}
-                        className="faq-block-btm"
-                        aria-hidden={activeFaq !== i}
-                        style={i === 0 ? undefined : { display: "none", height: 0 }}
-                      >
-                        <div className="answer-block">
-                          <p className="faq-answer">{a}</p>
-                        </div>
-                        <div className="faq-logo" aria-hidden="true">
-                          <div className="faq-logo-svg">
-                            <img src={A + "faq-26.svg"} alt="" />
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
+      <FAQ />
 
       {/* ------------------------------ FOOTER ------------------------------ */}
       <footer className="footer" id="contact">

@@ -126,9 +126,20 @@ export default function PlayfulCat() {
     };
     const motionPreference = window.matchMedia("(prefers-reduced-motion: reduce)");
 
+    const handleVisibility = () => {
+      if (document.hidden) {
+        if (animationFrame !== null) {
+          cancelAnimationFrame(animationFrame);
+          animationFrame = null;
+        }
+        return;
+      }
+      startAnimation();
+    };
     artwork.addEventListener("load", handleResize);
     window.addEventListener("resize", handleResize);
     window.addEventListener("pagehide", handlePageHide);
+    document.addEventListener("visibilitychange", handleVisibility);
     motionPreference.addEventListener("change", handleMotionPreference);
 
     return () => {
@@ -136,6 +147,7 @@ export default function PlayfulCat() {
       artwork.removeEventListener("load", handleResize);
       window.removeEventListener("resize", handleResize);
       window.removeEventListener("pagehide", handlePageHide);
+      document.removeEventListener("visibilitychange", handleVisibility);
       motionPreference.removeEventListener("change", handleMotionPreference);
       savePosition();
       savePositionRef.current = () => {};

@@ -38,6 +38,7 @@
   --size-font: calc(var(--size-container) / (var(--size-container-ideal) / var(--size-unit)));
 
   --brand-primary: #ff5400;
+  --brand-text: #a23800;
   --brand-secondary: #f8eee8;
   --brand-black: #000;
   --brand-white: #fdf8f5;
@@ -331,7 +332,7 @@ main { display: block; }
 
 /* ------------------------------- preloader ---------------------------- */
 .site-preloader {
-  position: fixed; inset: 0; width: 100vw; height: 100vh; height: 100dvh;
+  position: fixed; inset: 0; width: 100%; height: 100%; height: 100dvh;
   overflow: hidden; z-index: 9999; background: transparent;
 }
 .site-preloader-panels { position: absolute; inset: 0; z-index: 1; pointer-events: none; }
@@ -341,6 +342,7 @@ main { display: block; }
   width: min(46vw, 320px); max-width: 80vw; height: auto; object-fit: contain;
   pointer-events: none; user-select: none; opacity: 0; visibility: hidden;
 }
+.site-preloader-card picture { display: block; width: 100%; height: 100%; }
 .site-preloader-cards { position: absolute; inset: 0; z-index: 5; pointer-events: none; }
 .site-preloader-card {
   position: absolute; left: 50%; top: 50%; transform-origin: center center;
@@ -523,7 +525,7 @@ main { display: block; }
 .service-block.seven { left: -21%; }
 .service-text {
   font-family: var(--font-primary-dark); font-size: 5em; line-height: 80%;
-  color: var(--brand-primary); text-transform: uppercase;
+  color: var(--brand-text); text-transform: uppercase;
 }
 .service-svg { width: 7.25em; height: auto; min-width: 0; flex: none; overflow: hidden; transform-origin: center center; }
 .service-svg svg, .service-svg .lottie-animation { width: 100%; height: 100%; display: block; }
@@ -535,7 +537,7 @@ main { display: block; }
 .service-block.four .service-block-para-wrapper { right: 0.5em; }
 .service-block-para {
   font-family: var(--font-secondary); font-size: 0.875em; font-weight: 500;
-  line-height: 120%; color: var(--brand-primary); margin-bottom: 0;
+  line-height: 120%; color: var(--brand-text); margin-bottom: 0;
 }
 .services-path { position: relative; inset: 0; width: 100%; height: 100%; display: flex; justify-content: center; align-items: flex-start; z-index: 1; }
 .services-path-svg,
@@ -794,7 +796,7 @@ main { display: block; }
 }
 .footer-talk-text {
   font-family: var(--font-primary); font-size: clamp(2.2rem, 3.2vw, 5rem);
-  line-height: 0.85; letter-spacing: -0.06em; text-transform: uppercase; color: var(--brand-primary);
+  line-height: 0.85; letter-spacing: -0.06em; text-transform: uppercase; color: var(--brand-text);
   max-width: 11ch;
 }
 .footer-smiley {
@@ -851,7 +853,7 @@ main { display: block; }
 
 /* --------------------------- contact modal ---------------------------- */
 .contact-modal { position: fixed; inset: 0; z-index: 1200; padding: 1.25em; color: var(--brand-white); overflow: hidden; }
-.contact-wipe { position: fixed; inset: 0; width: 100vw; height: 100svh; z-index: 1; pointer-events: none; }
+.contact-wipe { position: fixed; inset: 0; width: 100%; height: 100svh; z-index: 1; pointer-events: none; }
 .modal-layer { position: relative; z-index: 2; height: 100%; opacity: 0; display: flex; flex-direction: column; }
 .modal-top { display: flex; justify-content: space-between; align-items: center; }
 .modal-home-link, .modal-close, .modal-social a {

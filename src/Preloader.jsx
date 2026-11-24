@@ -6,18 +6,19 @@ const LOGO = INTRO + "logo.png";
 const PANEL_COLOR = "#0d275c";
 const PANEL_COUNT = 8;
 const SAFETY_TIMEOUT = 14000;
+const PRELOADER_SESSION_KEY = "portfolio-preloader-shown";
 // the last card is the hero shot that stays in the middle of the ring
 const CARDS = [
-  { src: "01.jpg", ar: 1354 / 768 },
-  { src: "02.jpg", ar: 1521 / 740 },
-  { src: "03.jpg", ar: 1368 / 768 },
-  { src: "04.jpg", ar: 1368 / 768 },
-  { src: "05.jpg", ar: 1368 / 768 },
-  { src: "06.jpg", ar: 1366 / 768 },
-  { src: "07.jpg", ar: 1359 / 768 },
-  { src: "08.jpg", ar: 1511 / 738 },
-  { src: "09.jpg", ar: 1368 / 768 },
-  { src: "10.jpg", ar: 1368 / 768 },
+  { src: "01.jpg", width: 1354, height: 768 },
+  { src: "02.jpg", width: 1521, height: 740 },
+  { src: "03.jpg", width: 1368, height: 768 },
+  { src: "04.jpg", width: 1368, height: 768 },
+  { src: "05.jpg", width: 1368, height: 768 },
+  { src: "06.jpg", width: 1366, height: 768 },
+  { src: "07.jpg", width: 1359, height: 768 },
+  { src: "08.jpg", width: 1511, height: 738 },
+  { src: "09.jpg", width: 1368, height: 768 },
+  { src: "10.jpg", width: 1368, height: 768 },
 ];
 const HERO = CARDS.length - 1;
 const STACK = [
@@ -45,9 +46,24 @@ function pickLayout() {
 }
 
 export default function Preloader() {
+  const [shouldShow] = useState(() => {
+    if (typeof window === "undefined") return false;
+    try {
+      return window.sessionStorage.getItem(PRELOADER_SESSION_KEY) !== "true";
+    } catch (error) {
+      console.warn("Unable to read the preloader session state.", error);
+      return true;
+    }
+  });
   const [reducedMotion] = useState(() => {
     if (typeof window === "undefined") return false;
     return window.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches ?? false;
+  });
+  const [skipCardIntro] = useState(() => {
+    if (typeof window === "undefined") return false;
+    const connection = typeof navigator === "undefined" ? undefined : navigator.connection;
+    return window.matchMedia("(max-width: 767px)").matches
+      || Boolean(connection && (connection.saveData || connection.effectiveType === "slow-2g" || connection.effectiveType === "2g"));
   });
   const [done, setDone] = useState(false);
   const rootRef = useRef(null);
@@ -56,7 +72,12 @@ export default function Preloader() {
   const panelRefs = useRef([]);
 
   useLayoutEffect(() => {
-    if (done) return;
+    if (!shouldShow || done) return;
+    try {
+      window.sessionStorage.setItem(PRELOADER_SESSION_KEY, "true");
+    } catch (error) {
+      console.warn("Unable to save the preloader session state.", error);
+    }
     let finished = false;
     let revealed = false;
     let ctx;
@@ -102,7 +123,7 @@ export default function Preloader() {
       stagger: { each, from: "center" },
     });
 
-    if (reducedMotion) {
+    if (reducedMotion || skipCardIntro) {
       ctx = gsap.context(() => {
         const tl = gsap.timeline({ onComplete: finish });
         tl.timeScale(4);
@@ -175,9 +196,9 @@ export default function Preloader() {
       ctx?.revert();
       unlockPage();
     };
-  }, [done, reducedMotion]);
+  }, [done, reducedMotion, shouldShow]);
 
-  if (done) return null;
+  if (!shouldShow || done) return null;
 
   return (
     <div className="site-preloader" ref={rootRef} aria-hidden="true">
@@ -191,17 +212,48 @@ export default function Preloader() {
           />
         ))}
       </div>
-      <img ref={logoRef} className="site-preloader-logo" src={LOGO} alt="" draggable="false" decoding="async" />
-      {!reducedMotion && (
+      <picture>
+        <source
+          type="image/webp"
+          srcSet={`${INTRO}logo-320.webp 320w, ${INTRO}logo-640.webp 640w`}
+          sizes="min(46vw, 320px)"
+        />
+        <img
+          ref={logoRef}
+          className="site-preloader-logo"
+          src={LOGO}
+          width="1421"
+          height="418"
+          alt=""
+          draggable="false"
+          decoding="async"
+          fetchPriority="high"
+        />
+      </picture>
+      {!reducedMotion && !skipCardIntro && (
         <div className="site-preloader-cards">
           {CARDS.map((card, i) => (
             <div
               key={card.src}
               ref={(el) => { cardRefs.current[i] = el; }}
               className="site-preloader-card"
-              style={{ width: `min(90vw, ${(88 * card.ar).toFixed(1)}vh)`, aspectRatio: `${card.ar}` }}
+              style={{ width: `min(90vw, ${(88 * card.width / card.height).toFixed(1)}vh)`, aspectRatio: `${card.width} / ${card.height}` }}
             >
-              <img src={INTRO + card.src} alt="" draggable="false" decoding="async" />
+              <picture>
+                <source
+                  type="image/webp"
+                  srcSet={`${INTRO}${card.src.replace(".jpg", "-480.webp")} 480w, ${INTRO}${card.src.replace(".jpg", "-768.webp")} 768w, ${INTRO}${card.src.replace(".jpg", "-full.webp")} ${card.width}w`}
+                  sizes={`min(90vw, ${(88 * card.width / card.height).toFixed(1)}vh)`}
+                />
+                <img
+                  src={INTRO + card.src}
+                  width={card.width}
+                  height={card.height}
+                  alt=""
+                  draggable="false"
+                  decoding="async"
+                />
+              </picture>
             </div>
           ))}
         </div>

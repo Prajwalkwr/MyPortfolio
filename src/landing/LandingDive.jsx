@@ -159,6 +159,7 @@ export default function LandingDive({ diveRef, heroRef, headlineRef, introRef, r
     });
 
     let raf = 0;
+    let countRaf = 0;
     let idleTimer = 0;
     let running = false;
     let visible = false;
@@ -241,14 +242,16 @@ export default function LandingDive({ diveRef, heroRef, headlineRef, introRef, r
         counted = true;
         const start = performance.now();
         const count = (t) => {
+          if (disposed) return;
           const k = clamp01((t - start) / 1400);
           FACTS.forEach((fact, i) => {
             const el = countRefs.current[i];
             if (fact.count && el) el.textContent = String(Math.round(fact.value * easeOutQuart(clamp01(k * 1.15 - i * 0.08))));
           });
-          if (k < 1) requestAnimationFrame(count);
+          if (k < 1) countRaf = requestAnimationFrame(count);
+          else countRaf = 0;
         };
-        requestAnimationFrame(count);
+        countRaf = requestAnimationFrame(count);
       }
 
       const pointerEvents = e >= TAKEOVER ? "auto" : "none";
@@ -311,6 +314,7 @@ export default function LandingDive({ diveRef, heroRef, headlineRef, introRef, r
       disposed = true;
       cancelPreloaderWait();
       cancelAnimationFrame(raf);
+      cancelAnimationFrame(countRaf);
       window.clearTimeout(idleTimer);
       window.clearTimeout(loadTimer);
       if (loadIdle) cancelIdle(loadIdle);

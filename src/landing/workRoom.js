@@ -892,6 +892,7 @@ export function createWorkRoom({ host, section, items, onChange, onOpen }) {
       floorMaterial.dispose();
       reflection.dispose();
       renderer.dispose();
+      renderer.forceContextLoss?.();
       canvas.remove();
     },
   };

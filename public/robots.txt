@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://myportfolio-delta-nine-20.vercel.app/sitemap.xml
